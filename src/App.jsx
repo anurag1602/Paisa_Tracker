@@ -176,12 +176,16 @@ const store = {
   set: async (k, v) => {
     try {
       localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
-    } catch {}
+    } catch {
+      // ignore storage errors
+    }
   },
   del: async (k) => {
     try {
       localStorage.removeItem(k);
-    } catch {}
+    } catch {
+      // ignore storage errors
+    }
   },
 };
 
@@ -970,9 +974,9 @@ function ImpulseForm({ onAdd, compact }) {
 //  IMPULSE VAULT LIST (live countdown)
 // ═══════════════════════════════════════════════════
 function ImpulseList({ items, onPurchase, onSkip }) {
-  const [, tick] = useState(0);
+  const [now, setNow] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => tick((t) => t + 1), 1000);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -1015,7 +1019,7 @@ function ImpulseList({ items, onPurchase, onSkip }) {
       </h3>
       <div style={{ display: 'grid', gap: 12 }}>
         {items.map((item) => {
-          const msLeft = item.addedAt + 86400000 - Date.now();
+          const msLeft = item.addedAt + 86400000 - (now || item.addedAt);
           const locked = msLeft > 0;
           const countdown = fmtTimer(msLeft);
           const pctLeft = locked ? (msLeft / 86400000) * 100 : 0;
@@ -1836,11 +1840,15 @@ export default function PaisaTracker() {
       if (e)
         try {
           setExpenses(JSON.parse(e));
-        } catch {}
+        } catch {
+      // ignore storage errors
+    }
       if (im)
         try {
           setImpulse(JSON.parse(im));
-        } catch {}
+        } catch {
+      // ignore storage errors
+    }
       if (u && s) setScreen('app');
       else if (u) setScreen('onboarding');
       setReady(true);
