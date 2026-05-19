@@ -119,6 +119,43 @@ const fmtTimer = (ms) => {
   ).padStart(2, '0')}`;
 };
 
+const downloadJson = (filename, data) => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: 'application/json',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const sanitizeImportedExpenses = (items) =>
+  Array.isArray(items)
+    ? items
+        .filter((e) => e && e.title && e.date && Number(e.amount) >= 0)
+        .map((e) => ({
+          id: e.id || uid(),
+          title: String(e.title),
+          date: String(e.date),
+          amount: Number(e.amount),
+          category: CATS.includes(e.category) ? e.category : 'Other',
+        }))
+    : [];
+
+const sanitizeImportedImpulse = (items) =>
+  Array.isArray(items)
+    ? items
+        .filter((i) => i && i.title)
+        .map((i) => ({
+          id: i.id || uid(),
+          title: String(i.title),
+          amount: Number(i.amount) || 0,
+          addedAt: Number(i.addedAt) || Date.now(),
+        }))
+    : [];
+
 // ═══════════════════════════════════════════════════
 //  PERSISTENT STORAGE (window.storage API)
 // ═══════════════════════════════════════════════════
@@ -1174,6 +1211,8 @@ function TrackerApp({
   onSkipImpulse,
   onReset,
   onChangeSalary,
+  onExportData,
+  onImportData,
 }) {
   const [tab, setTab] = useState('dashboard');
   const [toast, setToast] = useState(null);
@@ -1269,21 +1308,60 @@ function TrackerApp({
               Hey, {username} 👋
             </div>
           </div>
-          <button
-            onClick={onReset}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(148,163,184,0.12)',
-              color: '#64748b',
-              borderRadius: 10,
-              padding: '6px 14px',
-              fontSize: '0.78rem',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            Reset App
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              onClick={onExportData}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(16,185,129,0.25)',
+                color: '#10b981',
+                borderRadius: 10,
+                padding: '6px 12px',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Export Backup
+            </button>
+            <label
+              style={{
+                border: '1px solid rgba(245,158,11,0.3)',
+                color: '#f59e0b',
+                borderRadius: 10,
+                padding: '6px 12px',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+              }}
+            >
+              Import Backup
+              <input
+                type="file"
+                accept="application/json"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onImportData(file);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+            <button
+              onClick={onReset}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(148,163,184,0.12)',
+                color: '#64748b',
+                borderRadius: 10,
+                padding: '6px 12px',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Reset App
+            </button>
+          </div>
         </div>
 
         {/* ── Sassy Banner ──────────────────────── */}
@@ -1816,6 +1894,47 @@ export default function PaisaTracker() {
     await store.set('paisa_impulse', updated);
   };
 
+  const exportData = () => {
+    downloadJson(`paisa-backup-${todayStr()}.json`, {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      username,
+      salary,
+      expenses,
+      impulse,
+    });
+  };
+
+  const importData = async (file) => {
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const nextUser = typeof parsed.username === 'string' ? parsed.username.trim() : '';
+      const nextSalary = Number(parsed.salary) > 0 ? Number(parsed.salary) : 0;
+      const nextExpenses = sanitizeImportedExpenses(parsed.expenses);
+      const nextImpulse = sanitizeImportedImpulse(parsed.impulse);
+
+      if (nextUser) {
+        setUsername(nextUser);
+        await store.set('paisa_user', nextUser);
+      }
+      if (nextSalary > 0) {
+        setSalary(nextSalary);
+        await store.set('paisa_salary', String(nextSalary));
+      }
+
+      setExpenses(nextExpenses);
+      setImpulse(nextImpulse);
+      await store.set('paisa_expenses', nextExpenses);
+      await store.set('paisa_impulse', nextImpulse);
+
+      if (nextUser && nextSalary > 0) setScreen('app');
+      else if (nextUser) setScreen('onboarding');
+    } catch {
+      alert('Invalid backup file. Please import a valid Paisa backup JSON.');
+    }
+  };
+
   const resetAll = async () => {
     await store.del('paisa_user');
     await store.del('paisa_salary');
@@ -1864,6 +1983,8 @@ export default function PaisaTracker() {
       onSkipImpulse={skipImpulse}
       onReset={resetAll}
       onChangeSalary={handleSalary}
+      onExportData={exportData}
+      onImportData={importData}
     />
   );
 }
