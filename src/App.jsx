@@ -197,6 +197,8 @@ const CARD = '#12121f';
 const CARD2 = '#0f0f1a';
 const BORDER = 'rgba(148,163,184,0.08)';
 const AMBER = '#f59e0b';
+const compact = false;
+
 const inp = {
   width: '100%',
   background: CARD2,
