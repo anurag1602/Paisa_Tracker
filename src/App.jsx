@@ -272,7 +272,7 @@ function LoginScreen({ onLogin }) {
               borderRadius: 20,
               background: 'linear-gradient(135deg,#f59e0b,#d97706)',
               display: 'flex',
-              alignItems: 'center',
+              alignItems: compact ? 'flex-start' : 'center',
               justifyContent: 'center',
               margin: '0 auto 18px',
               fontSize: '2rem',
@@ -440,7 +440,7 @@ function OnboardingScreen({ username, onSalary }) {
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: compact ? 'flex-start' : 'center',
               gap: 10,
               marginBottom: ok ? 6 : 16,
             }}
@@ -515,7 +515,7 @@ function OnboardingScreen({ username, onSalary }) {
 // ═══════════════════════════════════════════════════
 //  EXPENSE FORM
 // ═══════════════════════════════════════════════════
-function ExpenseForm({ onAdd }) {
+function ExpenseForm({ onAdd, compact }) {
   const [form, setForm] = useState({
     date: todayStr(),
     amount: '',
@@ -553,7 +553,7 @@ function ExpenseForm({ onAdd }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: compact ? '1fr' : '1fr 1fr',
           gap: 10,
           marginBottom: 10,
         }}
@@ -606,7 +606,7 @@ function ExpenseForm({ onAdd }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: compact ? '1fr' : '1fr 1fr',
           gap: 10,
           marginBottom: 14,
         }}
@@ -755,7 +755,7 @@ function ExpenseList({ expenses, onDelete }) {
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center',
+                  alignItems: compact ? 'flex-start' : 'center',
                   marginBottom: 8,
                   paddingBottom: 6,
                   borderBottom: '1px solid rgba(148,163,184,0.07)',
@@ -788,7 +788,7 @@ function ExpenseList({ expenses, onDelete }) {
                   key={e.id}
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: compact ? 'flex-start' : 'center',
                     gap: 10,
                     padding: '8px 0',
                     borderBottom: '1px solid rgba(148,163,184,0.04)',
@@ -816,7 +816,7 @@ function ExpenseList({ expenses, onDelete }) {
                     <div
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: compact ? 'flex-start' : 'center',
                         gap: 6,
                         marginTop: 1,
                       }}
@@ -876,7 +876,7 @@ function ExpenseList({ expenses, onDelete }) {
 // ═══════════════════════════════════════════════════
 //  IMPULSE VAULT FORM
 // ═══════════════════════════════════════════════════
-function ImpulseForm({ onAdd }) {
+function ImpulseForm({ onAdd, compact }) {
   const [form, setForm] = useState({ title: '', amount: '' });
   const submit = () => {
     if (!form.title.trim()) return;
@@ -911,7 +911,7 @@ function ImpulseForm({ onAdd }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 130px',
+          gridTemplateColumns: compact ? '1fr' : '1fr 130px',
           gap: 10,
           marginBottom: 12,
         }}
@@ -1147,7 +1147,7 @@ function ImpulseList({ items, onPurchase, onSkip }) {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: compact ? '100%' : 'auto' }}>
                 <button
                   onClick={() => !locked && onPurchase(item.id)}
                   disabled={locked}
@@ -1219,6 +1219,16 @@ function TrackerApp({
   const [editingSalary, setEditingSalary] = useState(false);
   const [newSalary, setNewSalary] = useState('');
 
+  const [compact, setCompact] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 720 : false
+  );
+
+  useEffect(() => {
+    const onResize = () => setCompact(window.innerWidth < 720);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3200);
@@ -1278,16 +1288,18 @@ function TrackerApp({
     >
       <Toast toast={toast} />
       <div
-        style={{ maxWidth: 800, margin: '0 auto', padding: '16px 16px 80px' }}
+        style={{ maxWidth: 800, margin: '0 auto', padding: compact ? '12px 12px 70px' : '16px 16px 80px' }}
       >
         {/* ── Header ─────────────────────────────── */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: compact ? 'flex-start' : 'center',
             paddingTop: 16,
             marginBottom: 24,
+            flexWrap: 'wrap',
+            gap: 10,
           }}
         >
           <div>
@@ -1398,7 +1410,7 @@ function TrackerApp({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3,1fr)',
+            gridTemplateColumns: compact ? '1fr' : 'repeat(3,1fr)',
             gap: 10,
             marginBottom: 14,
           }}
@@ -1541,7 +1553,7 @@ function TrackerApp({
               marginBottom: 12,
               display: 'flex',
               gap: 10,
-              alignItems: 'center',
+              alignItems: compact ? 'flex-start' : 'center',
               animation: 'fadeUp .2s ease',
             }}
           >
@@ -1667,13 +1679,13 @@ function TrackerApp({
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: compact ? 'flex-start' : 'center',
             marginBottom: 16,
             flexWrap: 'wrap',
             gap: 10,
           }}
         >
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: compact ? '100%' : 'auto' }}>
             {['dashboard', 'impulse'].map((t) => (
               <button
                 key={t}
@@ -1707,7 +1719,7 @@ function TrackerApp({
                       width: 18,
                       height: 18,
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: compact ? 'flex-start' : 'center',
                       justifyContent: 'center',
                       fontSize: '0.6rem',
                       fontWeight: 700,
@@ -1727,7 +1739,7 @@ function TrackerApp({
               borderRadius: 10,
               padding: '6px 14px',
               display: 'flex',
-              alignItems: 'center',
+              alignItems: compact ? 'flex-start' : 'center',
               gap: 7,
             }}
           >
@@ -1757,13 +1769,13 @@ function TrackerApp({
         {/* ── Tab Content ───────────────────────── */}
         {tab === 'dashboard' && (
           <div style={{ display: 'grid', gap: 16 }}>
-            <ExpenseForm onAdd={handleAddExpense} />
+            <ExpenseForm onAdd={handleAddExpense} compact={compact} />
             <ExpenseList expenses={expenses} onDelete={handleDeleteExpense} />
           </div>
         )}
         {tab === 'impulse' && (
           <div style={{ display: 'grid', gap: 16 }}>
-            <ImpulseForm onAdd={handleAddImpulse} />
+            <ImpulseForm onAdd={handleAddImpulse} compact={compact} />
             <ImpulseList
               items={impulse}
               onPurchase={handlePurchaseImpulse}
